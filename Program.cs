@@ -1,14 +1,36 @@
+using System.Text.Json.Serialization;
 using Azure.Monitor.OpenTelemetry.Exporter;
+using LaughingFish.SunriseSunsetApi.Services;
+using LaughingFish.SunriseSunsetApi.Solar;
+using LaughingFish.SunriseSunsetApi.Validation;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Azure.Functions.Worker.OpenTelemetry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.ConfigureFunctionsWebApplication();
+
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+{
+    options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    options.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+{
+    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+});
+
+builder.Services.AddSingleton<ISolarCalculator, NoaaSolarCalculator>();
+builder.Services.AddSingleton<ITimeZoneResolver, TimeZoneResolver>();
+builder.Services.AddSingleton<ISunriseSunsetRequestParser, SunriseSunsetRequestParser>();
+builder.Services.AddSingleton<ISunriseSunsetQuery, SunriseSunsetQuery>();
 
 var telemetry = builder.Services.AddOpenTelemetry()
     .UseFunctionsWorkerDefaults();
@@ -21,5 +43,7 @@ if (!string.IsNullOrWhiteSpace(appInsightsConnection))
 {
     telemetry.UseAzureMonitorExporter();
 }
+
+builder.Logging.AddConsole();
 
 builder.Build().Run();
