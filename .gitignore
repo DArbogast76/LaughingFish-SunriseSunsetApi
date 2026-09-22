@@ -1,0 +1,16 @@
+bin/
+obj/
+publish/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+local.settings.json
+.dotnet/
+*.nupkg
+.__azurite*
+
+*.bak
+*.old
+*.note

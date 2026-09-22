@@ -1,0 +1,45 @@
+name: Deploy func-SunriseSunsetApi-prod01
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AZURE_FUNCTIONAPP_NAME: func-SunriseSunsetApi-prod01
+  AZURE_RESOURCE_GROUP: rg-LaughingFish-SunriseSunset
+  DOTNET_VERSION: "10.0.x"
+  PROJECT_PATH: LaughingFish-SunriseSunsetApi.csproj
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Publish
+        run: dotnet publish LaughingFish-SunriseSunsetApi.csproj --configuration Release --output ./publish
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: 4581c585-9a90-4f3e-8497-6f95655819d8
+          tenant-id: a75af57e-2509-48af-b1b7-44a666115a79
+          subscription-id: 67645177-ba51-4b35-a7be-f9a435a30707
+
+      - name: Deploy to Flex Consumption
+        uses: Azure/functions-action@v1
+        with:
+          app-name: func-SunriseSunsetApi-prod01
+          package: ./publish
+          respect-funcignore: true
